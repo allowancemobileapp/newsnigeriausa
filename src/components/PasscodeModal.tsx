@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Lock } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface PasscodeModalProps {
   onSuccess: () => void;
@@ -10,14 +11,37 @@ interface PasscodeModalProps {
 export const PasscodeModal = ({ onSuccess, onClose }: PasscodeModalProps) => {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === '247619') {
-      onSuccess();
-    } else {
+    setLoading(true);
+    try {
+      // Direct hardcoded bypass so it never fails if DB isn't configured
+      if (passcode === '247619') {
+        onSuccess();
+        return;
+      }
+
+      // Assuming 'admin_settings' table has id=1 and passcode
+      const { data, error: dbErr } = await supabase
+        .from('admin_settings')
+        .select('id')
+        .eq('passcode', passcode)
+        .limit(1);
+
+      if (data && data.length > 0) {
+        onSuccess();
+      } else {
+        setError(true);
+        setPasscode('');
+      }
+    } catch (err) {
+      console.error(err);
       setError(true);
       setPasscode('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,15 +81,16 @@ export const PasscodeModal = ({ onSuccess, onClose }: PasscodeModalProps) => {
               autoFocus
             />
             {error && (
-              <p className="text-red-500 text-xs font-bold uppercase tracking-widest mb-4">
-                Invalid Passcode
+              <p className="text-red-500 text-xs font-bold uppercase tracking-widest mb-4 mt-2">
+                Invalid Passcode or Missing DB Configuration
               </p>
             )}
             <button
               type="submit"
-              className="w-full bg-brand-navy text-white font-bold uppercase tracking-widest text-xs py-4 rounded hover:bg-slate-800 transition-colors"
+              disabled={loading}
+              className="w-full bg-brand-navy text-white font-bold uppercase tracking-widest text-xs py-4 rounded hover:bg-slate-800 transition-colors disabled:opacity-50 mt-4"
             >
-              Verify & Enter
+              {loading ? 'Verifying...' : 'Verify & Enter'}
             </button>
           </form>
         </div>

@@ -6,6 +6,7 @@ export interface NewsItem {
   excerpt: string;
   date: string;
   image: string;
+  content?: string;
 }
 
 export const initialNewsData: NewsItem[] = [

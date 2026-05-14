@@ -30,10 +30,25 @@ import { useState, useEffect } from 'react';
 import { initialNewsData, NewsItem } from './data/news';
 import { PasscodeModal } from './components/PasscodeModal';
 import { AdminDashboard } from './components/AdminDashboard';
+import { AuthModal } from './components/AuthModal';
+import { GenericFormModal } from './components/FormsModal';
+import { ArticleModal } from './components/ArticleModal';
+import { supabase } from './lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 // --- Components ---
 
-const Navbar = ({ onAdminClick }: { onAdminClick: () => void }) => {
+const Navbar = ({ 
+  user, 
+  onAdminClick, 
+  onLoginClick,
+  onLogoutClick 
+}: { 
+  user: User | null;
+  onAdminClick: () => void;
+  onLoginClick: () => void;
+  onLogoutClick: () => void;
+}) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -81,9 +96,31 @@ const Navbar = ({ onAdminClick }: { onAdminClick: () => void }) => {
               {link.name}
             </a>
           ))}
-          <button className="bg-brand-emerald hover:bg-emerald-600 text-white px-5 py-2 rounded font-bold uppercase tracking-widest text-[11px] transition-all shadow-lg">
-            Institutional Login
+          <button 
+            onClick={onAdminClick}
+            className="text-xs font-bold uppercase tracking-widest transition-colors hover:text-brand-emerald"
+          >
+            Admin Access
           </button>
+          
+          {user ? (
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-bold font-mono text-brand-emerald">{user.email}</span>
+              <button 
+                onClick={onLogoutClick}
+                className="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded font-bold uppercase tracking-widest text-[11px] transition-all border border-white/20"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={onLoginClick}
+              className="bg-brand-emerald hover:bg-emerald-600 text-white px-5 py-2 rounded font-bold uppercase tracking-widest text-[11px] transition-all shadow-lg"
+            >
+              Login / Subscribe
+            </button>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -127,9 +164,21 @@ const Navbar = ({ onAdminClick }: { onAdminClick: () => void }) => {
                   Admin Access
                 </button>
               </div>
-              <button className="bg-brand-emerald text-white py-3 rounded-lg font-semibold mt-2">
-                Connect Now
-              </button>
+              {user ? (
+                <button 
+                  onClick={() => { onLogoutClick(); setMobileMenuOpen(false); }}
+                  className="bg-zinc-100 text-brand-navy py-3 rounded-lg font-semibold mt-2 uppercase tracking-widest text-xs"
+                >
+                  Sign Out ({user.email})
+                </button>
+              ) : (
+                <button 
+                  onClick={() => { onLoginClick(); setMobileMenuOpen(false); }}
+                  className="bg-brand-emerald text-white py-3 rounded-lg font-semibold mt-2 uppercase tracking-widest text-xs"
+                >
+                  Login / Subscribe
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -224,7 +273,7 @@ const SectionHeading = ({ subtitle, title, description, light = false }: { subti
   </div>
 );
 
-const NewsSection = ({ newsData }: { newsData: NewsItem[] }) => {
+const NewsSection = ({ newsData, onReadStory }: { newsData: NewsItem[], onReadStory: (item: NewsItem) => void }) => {
   const categories = ['Nigeria News', 'USA News', 'Global African Diaspora News'];
   const subCategories = ['All', 'Politics', 'Business', 'Culture', 'Technology', 'Social Impact'];
   
@@ -235,6 +284,15 @@ const NewsSection = ({ newsData }: { newsData: NewsItem[] }) => {
     news.category === activeCategory && 
     (activeSubCategory === 'All' || news.subCategory === activeSubCategory)
   );
+
+  const handleBrowseAll = () => {
+    setActiveCategory('Nigeria News');
+    setActiveSubCategory('All');
+    window.scrollTo({
+      top: document.getElementById('news')?.offsetTop || 0,
+      behavior: 'smooth'
+    });
+  };
 
   return (
     <section id="news" className="py-24 bg-zinc-50 border-y border-zinc-200 scroll-mt-20">
@@ -314,7 +372,10 @@ const NewsSection = ({ newsData }: { newsData: NewsItem[] }) => {
                   <p className="text-sm text-slate-600 leading-relaxed mb-6 font-serif flex-1">
                     {news.excerpt}
                   </p>
-                  <button className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-navy hover:text-brand-emerald transition-colors">
+                  <button 
+                    onClick={() => onReadStory(news)}
+                    className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-navy hover:text-brand-emerald transition-colors"
+                  >
                     Read Full Story <ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
@@ -330,7 +391,10 @@ const NewsSection = ({ newsData }: { newsData: NewsItem[] }) => {
         )}
 
         <div className="mt-16 text-center">
-          <button className="px-8 py-4 bg-brand-navy text-white rounded font-bold uppercase tracking-widest text-xs hover:bg-slate-800 transition-all flex items-center justify-center gap-3 mx-auto">
+          <button 
+            onClick={handleBrowseAll}
+            className="px-8 py-4 bg-brand-navy text-white rounded font-bold uppercase tracking-widest text-xs hover:bg-slate-800 transition-all flex items-center justify-center gap-3 mx-auto"
+          >
             Browse All Reports <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -339,7 +403,7 @@ const NewsSection = ({ newsData }: { newsData: NewsItem[] }) => {
   );
 };
 
-const GDIRSection = () => {
+const GDIRSection = ({ onEngagementClick }: { onEngagementClick: () => void }) => {
   const functions = [
     'Facilitate engagement with government institutions',
     'Build structured relationships with embassies',
@@ -401,7 +465,10 @@ const GDIRSection = () => {
                 ))}
               </div>
 
-              <button className="w-full mt-10 bg-brand-emerald text-white py-4 rounded-sm font-bold uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all">
+              <button 
+                onClick={onEngagementClick}
+                className="w-full mt-10 bg-brand-emerald text-white py-4 rounded-sm font-bold uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all"
+              >
                 Request Engagement
               </button>
             </div>
@@ -494,7 +561,7 @@ const PartnersSection = () => {
   );
 };
 
-const BenefitsSection = () => {
+const BenefitsSection = ({ onPartnerClick }: { onPartnerClick: () => void }) => {
   const benefits = [
     { title: 'Credible News', desc: 'Access to reliable diaspora-focused news and updates.', icon: Tv },
     { title: 'Visibility', desc: 'Promotion for businesses, entrepreneurs, and creatives.', icon: Star },
@@ -514,7 +581,10 @@ const BenefitsSection = () => {
               title="Why Engage with Us?"
               description="We provide more than just information; we build bridges for influence, opportunities, and social transformation."
             />
-            <button className="mt-4 px-6 py-3 border-2 border-brand-emerald text-brand-emerald font-bold uppercase tracking-widest text-[10px] rounded hover:bg-brand-emerald hover:text-white transition-all">
+            <button 
+              onClick={onPartnerClick}
+              className="mt-4 px-6 py-3 border-2 border-brand-emerald text-brand-emerald font-bold uppercase tracking-widest text-[10px] rounded hover:bg-brand-emerald hover:text-white transition-all"
+            >
               Become a Partner
             </button>
           </div>
@@ -606,7 +676,76 @@ const Footer = () => {
 export default function App() {
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [showEngagementModal, setShowEngagementModal] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null);
+
   const [newsData, setNewsData] = useState<NewsItem[]>(initialNewsData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    fetchNews();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleAdminClick = () => {
+    if (!user) {
+      alert("You need to be authenticated first to request admin access.");
+      setShowAuthModal(true);
+    } else {
+      setShowPasscodeModal(true);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowAdminDashboard(false);
+  };
+
+  const fetchNews = async () => {
+    setIsLoading(true);
+    try {
+      // Assuming 'news' table exists with similar columns as NewsItem
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .order('id', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching news from Supabase', error);
+      } else if (data && data.length === 0) {
+        // Automatically seed the database with the initial template data if it's completely empty!
+        const { error: seedError } = await supabase.from('news').insert(initialNewsData);
+        if (!seedError) {
+           setNewsData(initialNewsData);
+        } else {
+           console.error('Error seeding data:', seedError);
+           setNewsData(initialNewsData); // fallback to displaying it anyway
+        }
+      } else if (data) {
+        setNewsData(data as NewsItem[]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch from Supabase', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (showAdminDashboard) {
     return (
@@ -622,7 +761,12 @@ export default function App() {
 
   return (
     <div className="font-sans">
-      <Navbar onAdminClick={() => setShowPasscodeModal(true)} />
+      <Navbar 
+        user={user}
+        onAdminClick={handleAdminClick} 
+        onLoginClick={() => setShowAuthModal(true)}
+        onLogoutClick={handleLogout}
+      />
       <Hero />
       
       <main>
@@ -680,11 +824,14 @@ export default function App() {
           </div>
         </section>
 
-        <NewsSection newsData={newsData} />
-        <GDIRSection />
+        <NewsSection 
+          newsData={newsData} 
+          onReadStory={(article) => setSelectedArticle(article)} 
+        />
+        <GDIRSection onEngagementClick={() => setShowEngagementModal(true)} />
         <InitiativesSection />
         <PartnersSection />
-        <BenefitsSection />
+        <BenefitsSection onPartnerClick={() => setShowPartnerModal(true)} />
         
         {/* Call to Action */}
         <section className="py-24 px-6">
@@ -714,7 +861,24 @@ export default function App() {
       </main>
 
       <Footer />
+
       <AnimatePresence>
+        {selectedArticle && (
+          <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
+        )}
+
+        {showAuthModal && (
+          <AuthModal onClose={() => setShowAuthModal(false)} />
+        )}
+        
+        {showPartnerModal && (
+          <GenericFormModal type="partner" onClose={() => setShowPartnerModal(false)} />
+        )}
+        
+        {showEngagementModal && (
+          <GenericFormModal type="engagement" onClose={() => setShowEngagementModal(false)} />
+        )}
+
         {showPasscodeModal && (
           <PasscodeModal 
             onSuccess={() => {
