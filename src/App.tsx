@@ -187,50 +187,161 @@ const Navbar = ({
   );
 };
 
-const Hero = () => {
+const Hero = ({ 
+  newsData, 
+  onEngagementClick, 
+  onReadStory,
+  onPartnerClick 
+}: { 
+  newsData: NewsItem[]; 
+  onEngagementClick: () => void;
+  onReadStory: (item: NewsItem) => void;
+  onPartnerClick: () => void;
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Take top 5 news items for carousel, or fallback to an array of 1 item using a default image if empty
+  const carouselItems = newsData && newsData.length > 0 
+    ? newsData.slice(0, 5) 
+    : [];
+
+  useEffect(() => {
+    if (carouselItems.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselItems.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [carouselItems.length]);
+
   return (
-    <section className="relative min-h-screen pt-32 pb-12 md:pb-20 flex flex-col overflow-hidden">
-      {/* Background with overlay */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=2000" 
-          alt="International bridge" 
-          className="w-full h-full object-cover"
-          referrerPolicy="no-referrer"
-        />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
-      </div>
+    <section className="relative min-h-screen pt-32 pb-12 md:pb-20 flex flex-col overflow-hidden bg-black">
+      {/* Background Slideshow */}
+      <AnimatePresence mode="popLayout">
+        {carouselItems.length > 0 ? (
+          <motion.div
+            key={carouselItems[currentIndex]?.id}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-0 z-0"
+          >
+            <img 
+              src={carouselItems[currentIndex]?.image} 
+              alt={carouselItems[currentIndex]?.title} 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30 backdrop-blur-[1px]"></div>
+          </motion.div>
+        ) : (
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=2000" 
+              alt="International bridge" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 w-full flex-1 flex flex-col justify-center mb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-3xl"
-        >
-          <div className="inline-flex items-center gap-2 px-2 py-1 bg-brand-emerald/10 border border-brand-emerald/30 rounded text-brand-emerald mb-6">
-            <span className="text-[10px] font-bold tracking-widest uppercase">Global Policy Linkage</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white leading-[1.1] mb-6">
-            CONNECTING <span className="text-brand-emerald">NIGERIANS</span> <br />
-            <span className="italic font-light">GLOBALLY.</span>
-          </h1>
-          
-          <p className="text-xl text-slate-300 font-serif mb-10 leading-relaxed max-w-2xl">
-            A globally positioned media and engagement company committed to connecting the diaspora with news, institutional opportunities, and strategic partnerships.
-          </p>
+        <AnimatePresence mode="wait">
+          {carouselItems.length > 0 ? (
+            <motion.div
+              key={carouselItems[currentIndex]?.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.8 }}
+              className="max-w-3xl"
+            >
+              <div className="inline-flex items-center gap-2 mb-6">
+                <span className="bg-brand-emerald text-white px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase">Top Story</span>
+                <span className="bg-white/20 text-white px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase backdrop-blur-sm border border-white/10">{carouselItems[currentIndex]?.category}</span>
+              </div>
+              
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-[1.1] mb-6 drop-shadow-lg">
+                {carouselItems[currentIndex]?.title}
+              </h1>
+              
+              <p className="text-lg md:text-xl text-slate-300 font-serif mb-10 leading-relaxed max-w-2xl line-clamp-3">
+                {carouselItems[currentIndex]?.excerpt}
+              </p>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button className="px-8 py-4 bg-brand-emerald text-white rounded font-bold uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 group">
-              Strategic Engagement
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button className="px-8 py-4 bg-white/5 text-white border border-white/20 backdrop-blur-md rounded font-bold uppercase tracking-widest text-xs hover:bg-white/10 transition-all">
-              View Institutions
-            </button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={() => onReadStory(carouselItems[currentIndex])}
+                  className="px-8 py-4 bg-brand-emerald text-white rounded font-bold uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 group"
+                >
+                  Read Full Story
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button 
+                  onClick={() => {
+                    const el = document.getElementById('news');
+                    el?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-8 py-4 bg-white/10 text-white border border-white/20 backdrop-blur-md rounded font-bold uppercase tracking-widest text-xs hover:bg-white/20 transition-all flex items-center justify-center"
+                >
+                  Browse All News
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="max-w-3xl"
+            >
+              <div className="inline-flex items-center gap-2 px-2 py-1 bg-brand-emerald/10 border border-brand-emerald/30 rounded text-brand-emerald mb-6">
+                <span className="text-[10px] font-bold tracking-widest uppercase">Global Policy Linkage</span>
+              </div>
+              
+              <h1 className="text-5xl md:text-7xl font-serif font-bold text-white leading-[1.1] mb-6">
+                CONNECTING <span className="text-brand-emerald">NIGERIANS</span> <br />
+                <span className="italic font-light">GLOBALLY.</span>
+              </h1>
+              
+              <p className="text-xl text-slate-300 font-serif mb-10 leading-relaxed max-w-2xl">
+                A globally positioned media and engagement company committed to connecting the diaspora with news, institutional opportunities, and strategic partnerships.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={onEngagementClick}
+                  className="px-8 py-4 bg-brand-emerald text-white rounded font-bold uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 group"
+                >
+                  Strategic Engagement
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button 
+                  onClick={onPartnerClick}
+                  className="px-8 py-4 bg-white/5 text-white border border-white/20 backdrop-blur-md rounded font-bold uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
+                >
+                  View Institutions
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Carousel Indicators */}
+        {carouselItems.length > 1 && (
+          <div className="absolute bottom-0 left-6 flex gap-2">
+            {carouselItems.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex ? 'w-8 bg-brand-emerald' : 'w-2 bg-white/40 hover:bg-white/60'}`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
           </div>
-        </motion.div>
+        )}
       </div>
 
       {/* Stats overlay */}
@@ -767,7 +878,12 @@ export default function App() {
         onLoginClick={() => setShowAuthModal(true)}
         onLogoutClick={handleLogout}
       />
-      <Hero />
+      <Hero 
+        newsData={newsData} 
+        onEngagementClick={() => setShowEngagementModal(true)} 
+        onReadStory={(article) => setSelectedArticle(article)} 
+        onPartnerClick={() => setShowPartnerModal(true)}
+      />
       
       <main>
         {/* Intro Section */}
