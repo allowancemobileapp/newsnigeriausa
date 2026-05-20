@@ -27,7 +27,13 @@ export const AuthModal = ({ onClose }: AuthModalProps) => {
         if (error) throw error;
         onClose();
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin
+          }
+        });
         if (error) throw error;
         // Also auto-subscribe them to notifications
         await supabase.from('subscribers').upsert({ email }).select().single();

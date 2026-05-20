@@ -72,8 +72,8 @@ const Navbar = ({
     }`}>
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="bg-white p-1.5 rounded shadow-sm">
-            <div className="w-9 h-9 border-2 border-brand-navy flex items-center justify-center font-bold text-lg text-brand-navy">NN</div>
+          <div className="bg-white p-1 rounded shadow-sm">
+            <img src="/logo.jpg" alt="News Nigeria USA Logo" className="w-10 h-10 object-contain rounded-sm" />
           </div>
           <div>
             <h1 className="text-sm md:text-lg font-bold tracking-tight uppercase leading-none">
@@ -725,8 +725,8 @@ const Footer = () => {
         <div className="grid lg:grid-cols-4 gap-12 mb-16">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-4 mb-6">
-              <div className="bg-white p-2 rounded shadow-sm border border-slate-200">
-                <div className="w-8 h-8 border-2 border-brand-navy flex items-center justify-center font-bold text-brand-navy">NN</div>
+              <div className="bg-white p-1 rounded shadow-sm border border-slate-200">
+                <img src="/logo.jpg" alt="News Nigeria USA Logo" className="w-12 h-12 object-contain rounded-sm" />
               </div>
               <div>
                 <h2 className="font-serif font-bold text-2xl text-brand-navy tracking-tight">NEWS NIGERIA</h2>
